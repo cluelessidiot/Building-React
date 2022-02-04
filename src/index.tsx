@@ -1,44 +1,3 @@
-/* eslint-disable react/style-prop-object */
-
-//-----steps-1
-// const element = <h1 title="foo">Hello</h1>
-// const element = React.createElement(
-//     "h1",
-//     { title: "foo" },
-//     "Hello"
-//   )
-// {
-//     "type": "h1",
-
-//     "props": {
-//         "title": "foo",
-//         "children": "Hello"
-//     },
-//     "_owner": null,
-//     "_store": {}
-// }
-
-/***
- * const container = document.getElementById("root")
-const element = {
-  type: "h1",
-  props: {
-    title: "foo",
-    children:"Hello",
-  }
-} 
-
-const node:HTMLElement = document.createElement(element.type)
-node["title"] = element.props.title
-const text:Text = document.createTextNode("")
-console.log(text)
-text["nodeValue"] = element.props.children
-node.appendChild(text)
-container?.appendChild(node)
- * 
- * 
- */
-
 type CustomJSX = Pick<JSX.Element, "type" | "props">; // Omit<JSX.Element,"key">
 //   ReactDOM.render(element, container)
 function createTextElement(text: string): CustomJSX {
@@ -89,13 +48,12 @@ export const QReact = {
   createElement,
   render
 };
-// const element = QReact.createElement(
-//     "div",
-//     { id: "foo" },
-//     QReact.createElement("a", null, "bar"),
-//     QReact.createElement("b")
-//   )
 
+/**
+ * this will divert jsx parsing through our custom createElement
+ * function.by default jSX runtime is automatic,we have to use old
+ * classic runtimes
+ */
 /** @jsxRuntime classic */
 /** @jsx QReact.createElement */
 const element: JSX.Element = (
@@ -108,13 +66,7 @@ const element: JSX.Element = (
     <h1>Hello world</h1>
   </div>
 );
-// const element = (
-//     <div id="foo">
-//       <a href=''>bar</a>
-//       <b />
-//     </div>
-//   )
 
 const container = document.getElementById("root");
-//   ReactDOM.render(element, container)
+
 QReact.render(element, container as HTMLElement);
