@@ -28,15 +28,21 @@ const createElement = (
     }
   };
 };
-
-let nextUnitOfWork = null;
 function render(element: JSX.Element, container: HTMLElement) {
-  nextUnitOfWork = {
-    dom: container,
-    props: {
-      children: [element]
-    }
-  };
+  const dom: HTMLElement =
+    element.type === "TEXT_ELEMENT"
+      ? document.createTextNode("")
+      : document.createElement(element.type);
+  const isProperty = (key: string) => key !== "children";
+  Object.keys(element.props)
+    .filter(isProperty)
+    .forEach((name) => {
+      dom[name] = element.props[name];
+    });
+  element.props.children.forEach(
+    (child: JSX.Element): ReturnType<typeof render> => render(child, dom)
+  );
+  container.appendChild(dom);
 }
 export const QReact = {
   createElement,
@@ -47,6 +53,8 @@ export const QReact = {
  * work and animations
  */
 
+let nextUnitOfWork = null;
+
 function workLoop(deadline) {
   let shouldYield = false;
   while (nextUnitOfWork && !shouldYield) {
@@ -56,15 +64,12 @@ function workLoop(deadline) {
   requestIdleCallback(workLoop);
 }
 requestIdleCallback(workLoop);
+function performUnitOfWork(nextUnitOfWork) {
+  // TODO
+}
 
-type Fiber = {
-  parent: Fiber;
-  child?: Fiber;
-  sibling?: Fiber;
-  dom: HTMLElement | null;
-} & Pick<JSX.Element, "type" | "props">;
-function createDom(fiber: Fiber): HTMLElement {
-  const dom: HTMLElement =
+function createDom(fiber) {
+  const dom =
     fiber.type == "TEXT_ELEMENT"
       ? document.createTextNode("")
       : document.createElement(fiber.type);
@@ -77,48 +82,6 @@ function createDom(fiber: Fiber): HTMLElement {
     });
   return dom;
 }
-function performUnitOfWork(fiber: Fiber) {
-  if (!fiber.dom) {
-    fiber.dom = createDom(fiber);
-  }
-  if (fiber.parent) {
-    fiber.parent.dom?.appendChild(fiber.dom);
-  }
-
-  const elements = fiber.props.children;
-  let index = 0;
-  let prevSibling = null;
-  while (index < elements.length) {
-    const element = elements[index];
-
-    const newFiber: Fiber = {
-      type: element.type,
-      props: element.props,
-      parent: fiber,
-      dom: null
-    };
-
-    if (index === 0) {
-      fiber.child = newFiber;
-    } else {
-      prevSibling!.sibling = newFiber;
-    }
-
-    prevSibling = newFiber;
-    index++;
-  }
-
-  if (fiber.child) {
-    return fiber.child;
-  }
-  let nextFiber = fiber;
-  while (nextFiber) {
-    if (nextFiber.sibling) {
-      return nextFiber.sibling;
-    }
-    nextFiber = nextFiber.parent;
-  }
-}
 
 /**
  * this will divert jsx parsing through our custom createElement
@@ -128,7 +91,7 @@ function performUnitOfWork(fiber: Fiber) {
 /** @jsxRuntime classic */
 /** @jsx QReact.createElement */
 const element: JSX.Element = (
-  <div id="foo">
+  <div id="foo" style={"background: salmon"}>
     <a>foobar</a>
     <q>
       <h4>hello h4</h4>
